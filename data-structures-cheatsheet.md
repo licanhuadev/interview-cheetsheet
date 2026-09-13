@@ -246,6 +246,124 @@ with open("file.txt") as f:
 
 ---
 
+## 14. Operator & Language Construct Differences
+
+Not every language supports the same operators/constructs. This section highlights where they **diverge** — critical to know so you don't write invalid code during an interview.
+
+### 14.1 Increment / Decrement / Compound Assignment
+
+| Feature                  | C++            | C#             | Java           | Python3                          |
+|---------------------------|-----------------|-----------------|-----------------|------------------------------------|
+| Pre-increment `++a`       | ✅ supported    | ✅ supported    | ✅ supported    | ❌ not supported (use `a += 1`)    |
+| Post-increment `a++`      | ✅ supported    | ✅ supported    | ✅ supported    | ❌ not supported (use `a += 1`)    |
+| Decrement `--a` / `a--`   | ✅ supported    | ✅ supported    | ✅ supported    | ❌ not supported (use `a -= 1`)    |
+| Compound assign `+=,-=,*=,/=` | ✅          | ✅              | ✅              | ✅ (but no `++`/`--` versions)     |
+| Bitwise compound `&=,|=,^=,<<=,>>=` | ✅    | ✅              | ✅              | ✅                                  |
+
+> Python's design philosophy avoids `++`/`--` because `a++` in an expression is ambiguous/surprising (it doesn't even parse — `++a` is just unary-plus-unary-plus). Always use `a += 1`.
+
+### 14.2 Ternary / Conditional Expression
+
+| Language | Syntax                          |
+|----------|----------------------------------|
+| C++      | `cond ? a : b`                   |
+| C#       | `cond ? a : b`                   |
+| Java     | `cond ? a : b`                   |
+| Python3  | `a if cond else b` (different order!) |
+
+### 14.3 Logical Operators
+
+| Feature        | C++          | C#           | Java         | Python3           |
+|-----------------|--------------|--------------|--------------|--------------------|
+| AND             | `&&`         | `&&`         | `&&`         | `and`              |
+| OR              | `\|\|`       | `\|\|`       | `\|\|`       | `or`               |
+| NOT             | `!`          | `!`          | `!`          | `not`              |
+| Short-circuit?  | yes          | yes          | yes          | yes                |
+
+### 14.4 Equality / Identity
+
+| Feature                        | C++                     | C#                                 | Java                                     | Python3                          |
+|----------------------------------|--------------------------|--------------------------------------|---------------------------------------------|-------------------------------------|
+| Value equality (primitives)     | `==`                    | `==`                                 | `==`                                        | `==`                                |
+| Value equality (objects/strings)| `==` (can be overloaded)| `==` (`string` overloads it to value equality) | `.equals()` — **`==` compares references!** | `==` (calls `__eq__`)              |
+| Reference/identity equality     | pointer compare `p1==p2`| `object.ReferenceEquals(a,b)`        | `==` on non-primitive types                 | `is`                                |
+| Not-equal                       | `!=`                    | `!=`                                 | `!=`                                        | `!=`                                |
+
+> Biggest gotcha: **Java `String a == b` compares object references, not content** — must use `.equals()`. Python's `==` calls `__eq__`, correctly comparing content, but `is` checks identity (small int/string caching can make `is` misleadingly `True` for small values).
+
+### 14.5 Division & Modulo
+
+| Feature                         | C++                      | C#                        | Java                      | Python3                              |
+|-----------------------------------|---------------------------|-----------------------------|-----------------------------|-----------------------------------------|
+| Integer division                | `7 / 2` → `3` (truncates toward 0) | `7 / 2` → `3` (truncates toward 0) | `7 / 2` → `3` (truncates toward 0) | `7 // 2` → `3` (floors toward -∞) |
+| True/float division             | `7.0 / 2` → `3.5`         | `7.0 / 2` → `3.5`          | `7.0 / 2` → `3.5`          | `7 / 2` → `3.5` (`/` is always float!)  |
+| Modulo with negative operands    | `-7 % 2` → `-1` (sign follows dividend) | `-7 % 2` → `-1` | `-7 % 2` → `-1`            | `-7 % 2` → `1` (sign follows divisor)   |
+| Power operator                  | ❌ none — use `pow(a,b)` / `<cmath>` | ❌ none — use `Math.Pow(a,b)` | ❌ none — use `Math.pow(a,b)` | ✅ `a ** b` built-in operator |
+
+> This is a classic interview trap: **Python's `%` and `//` round toward negative infinity**, while C++/C#/Java round toward zero. `-7 % 3` is `2` in Python but `-1` in the other three.
+
+### 14.6 Type System / Declarations
+
+| Feature                  | C++                          | C#                          | Java                        | Python3                    |
+|----------------------------|--------------------------------|--------------------------------|--------------------------------|-------------------------------|
+| Static vs dynamic typing | static                        | static                        | static                        | dynamic                       |
+| Type inference            | `auto x = 5;`                 | `var x = 5;`                  | `var x = 5;` (Java 10+)       | implicit (no keyword)         |
+| Explicit pointers          | ✅ `int* p`, `p->field`       | ❌ (only in `unsafe` blocks)  | ❌ none (references only)     | ❌ none (references only)     |
+| Manual memory mgmt        | ✅ `new`/`delete`, RAII       | ❌ garbage collected           | ❌ garbage collected           | ❌ garbage collected           |
+| Operator overloading       | ✅ fully supported             | ✅ supported (`operator +`)   | ❌ not supported                | ✅ via dunder methods (`__add__`) |
+| Multiple inheritance       | ✅ classes                     | ❌ (interfaces only)           | ❌ (interfaces only)           | ✅ classes                     |
+| Checked array bounds       | ❌ (`operator[]` unchecked, `.at()` checked) | ✅ throws `IndexOutOfRangeException` | ✅ throws `ArrayIndexOutOfBoundsException` | ✅ throws `IndexError` |
+
+### 14.7 Null / Empty Handling
+
+| Feature                  | C++                        | C#                           | Java                          | Python3                    |
+|----------------------------|-------------------------------|---------------------------------|-----------------------------------|--------------------------------|
+| Null value keyword        | `nullptr`                    | `null`                         | `null`                           | `None`                         |
+| Null-coalescing operator  | ❌ none                       | ✅ `a ?? b`                     | ❌ none (use ternary)            | ❌ none (use `a if a is not None else b`, or `a or b`) |
+| Null-conditional access   | ❌ none                       | ✅ `obj?.Field`                  | ❌ none (needs `Optional`)       | ❌ none (needs explicit check) |
+| Optional/Maybe type       | `std::optional<T>` (C++17)   | `Nullable<T>` / nullable ref types | `Optional<T>`                 | implicit — any var can be `None` |
+
+### 14.8 Iteration & Ranges
+
+| Feature                  | C++                                | C#                                | Java                                | Python3                        |
+|----------------------------|---------------------------------------|---------------------------------------|------------------------------------------|------------------------------------|
+| Range-based for            | `for (auto& x : container)`          | `foreach (var x in collection)`      | `for (var x : collection)`              | `for x in iterable:`               |
+| Numeric range loop         | `for (int i=0; i<n; i++)`            | `for (int i=0; i<n; i++)`            | `for (int i=0; i<n; i++)`               | `for i in range(n):`               |
+| Step/stride range          | manual (`i += step`)                 | manual (`i += step`)                 | manual (`i += step`)                    | `range(start, stop, step)`         |
+| List/array slicing         | ❌ none built-in (iterators/`substr`) | ❌ none built-in (`.Skip().Take()` LINQ) | ❌ none built-in (`Arrays.copyOfRange`) | ✅ `a[1:4]`, `a[::-1]`, `a[:-1]`   |
+| List comprehension         | ❌ none                                | ✅ LINQ query/method syntax           | ❌ none (use Streams: `.stream().map()`) | ✅ `[x*2 for x in a if x>0]`       |
+| Chained comparisons        | ❌ (`a < b < c` compiles but wrong!)  | ❌ not supported                      | ❌ not supported                          | ✅ `a < b < c` works as expected  |
+
+> **Chained comparison trap:** `a < b < c` *compiles* in C++/C#/Java but does NOT mean what you think — it evaluates `(a < b) < c`, comparing a bool to `c`. Only Python evaluates it as `a < b and b < c`.
+
+### 14.9 Switch / Pattern Matching
+
+| Feature                     | C++                          | C#                                  | Java                                 | Python3                              |
+|-------------------------------|---------------------------------|----------------------------------------|------------------------------------------|------------------------------------------|
+| Switch statement             | ✅ `switch/case`, needs `break` | ✅ `switch/case`, needs `break`        | ✅ `switch/case`, needs `break`          | ❌ no `switch`; use `if/elif` or `match` |
+| Pattern matching / match expr | ❌ none (C++ has no `match`)   | ✅ `switch` expressions + patterns (C# 8+) | ✅ `switch` expressions (Java 14+)      | ✅ `match/case` (Python 3.10+)           |
+| Fallthrough by default        | ✅ yes (falls through unless `break`) | ❌ no (must use `goto case`)     | ✅ yes for classic `switch` (falls through unless `break`) | N/A (no switch)               |
+
+### 14.10 Function/Variable Swap
+
+| Language | Idiomatic swap                          |
+|----------|-------------------------------------------|
+| C++      | `swap(a, b);` (`<algorithm>`/`<utility>`) |
+| C#       | `(a, b) = (b, a);` (tuple deconstruction, C# 7+) |
+| Java     | ❌ no built-in — manual temp variable      |
+| Python3  | ✅ `a, b = b, a`                           |
+
+### 14.11 Exceptions
+
+| Feature                   | C++                         | C#                           | Java                              | Python3                          |
+|------------------------------|--------------------------------|---------------------------------|----------------------------------------|--------------------------------------|
+| Try/catch keyword           | `try { } catch (Type e) { }`  | `try { } catch (Type e) { }`   | `try { } catch (Type e) { }`           | `try: ... except Type as e: ...`    |
+| Finally block               | ❌ none (use RAII destructors) | ✅ `finally { }`                | ✅ `finally { }`                       | ✅ `finally:`                        |
+| Checked exceptions          | ❌ none                        | ❌ none                         | ✅ (must declare `throws` or catch)    | ❌ none                              |
+| Multi-catch                 | multiple `catch` blocks        | multiple `catch` blocks         | ✅ `catch (IOException \| SQLException e)` | ✅ `except (TypeError, ValueError):` |
+
+---
+
 ## Language-Specific Gotchas
 
 - **C++**: `unordered_map`/`unordered_set` have no guaranteed order; `map`/`set` are ordered (red-black tree). Watch out for iterator invalidation after `erase`.
