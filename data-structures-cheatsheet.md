@@ -364,6 +364,170 @@ Not every language supports the same operators/constructs. This section highligh
 
 ---
 
+## 15. Initialization & Iteration Patterns
+
+### 15.1 Initializing a List/Array of single values
+
+| Language | Syntax |
+|----------|--------|
+| C++      | `vector<int> a = {1, 2, 3};`  or  `int arr[] = {1, 2, 3};` |
+| C#       | `List<int> a = new() { 1, 2, 3 };`  or  `int[] arr = { 1, 2, 3 };` |
+| Java     | `List<Integer> a = new ArrayList<>(List.of(1, 2, 3));`  or  `int[] arr = {1, 2, 3};` |
+| Python3  | `a = [1, 2, 3]` |
+
+### 15.2 Initializing a List/Array of pairs (tuples)
+
+| Language | Syntax |
+|----------|--------|
+| C++      | `vector<pair<int,int>> a = {{1,2}, {3,4}, {5,6}};` |
+| C#       | `List<(int, int)> a = new() { (1,2), (3,4), (5,6) };` |
+| Java     | No native tuple type. Use `int[]`: `List<int[]> a = new ArrayList<>(List.of(new int[]{1,2}, new int[]{3,4}));` — or a `record` (Java 16+): `record Pair(int first, int second) {}` then `List<Pair> a = new ArrayList<>(List.of(new Pair(1,2), new Pair(3,4)));` |
+| Python3  | `a = [(1, 2), (3, 4), (5, 6)]` |
+
+### 15.3 Initializing a Map/Dictionary (key → value)
+
+| Language | Syntax |
+|----------|--------|
+| C++      | `unordered_map<string,int> m = {{"a",1}, {"b",2}};` |
+| C#       | `Dictionary<string,int> m = new() { {"a",1}, {"b",2} };`  or  `new() { ["a"]=1, ["b"]=2 };` |
+| Java     | `Map<String,Integer> m = new HashMap<>(Map.of("a",1, "b",2));` |
+| Python3  | `m = {"a": 1, "b": 2}` |
+
+### 15.4 Initializing a Set
+
+| Language | Syntax |
+|----------|--------|
+| C++      | `unordered_set<int> s = {1, 2, 3};` |
+| C#       | `HashSet<int> s = new() { 1, 2, 3 };` |
+| Java     | `Set<Integer> s = new HashSet<>(Set.of(1, 2, 3));` |
+| Python3  | `s = {1, 2, 3}` |
+
+---
+
+### 15.5 Iterating single values — index-based `for`
+
+```cpp
+// C++
+for (int i = 0; i < a.size(); i++) {
+    cout << a[i];
+}
+```
+```csharp
+// C#
+for (int i = 0; i < a.Count; i++) {
+    Console.WriteLine(a[i]);
+}
+```
+```java
+// Java
+for (int i = 0; i < a.size(); i++) {
+    System.out.println(a.get(i));
+}
+```
+```python
+# Python3
+for i in range(len(a)):
+    print(a[i])
+```
+
+### 15.6 Iterating single values — `foreach` / range-based `for`
+
+```cpp
+// C++ — use auto& to avoid copies
+for (auto& x : a) cout << x;
+```
+```csharp
+// C#
+foreach (int x in a) Console.WriteLine(x);
+```
+```java
+// Java
+for (int x : a) System.out.println(x);
+```
+```python
+# Python3
+for x in a:
+    print(x)
+```
+
+### 15.7 Iterating pairs/tuples with destructuring
+
+```cpp
+// C++17 structured bindings
+for (auto& [x, y] : a) cout << x << "," << y;
+```
+```csharp
+// C# tuple deconstruction
+foreach (var (x, y) in a) Console.WriteLine($"{x},{y}");
+```
+```java
+// Java — no destructuring; use array indices or record accessors
+for (int[] p : a) System.out.println(p[0] + "," + p[1]);
+// with a record:
+for (Pair p : a) System.out.println(p.first() + "," + p.second());
+```
+```python
+# Python3 — tuple unpacking
+for x, y in a:
+    print(x, y)
+```
+
+### 15.8 Iterating map/dictionary entries (key-value pairs)
+
+```cpp
+// C++17 structured bindings
+for (auto& [k, v] : m) cout << k << "," << v;
+```
+```csharp
+// C#
+foreach (var kv in m) Console.WriteLine($"{kv.Key},{kv.Value}");
+// or deconstruct directly (C# 7+)
+foreach (var (k, v) in m) Console.WriteLine($"{k},{v}");
+```
+```java
+// Java
+for (Map.Entry<String, Integer> e : m.entrySet()) {
+    System.out.println(e.getKey() + "," + e.getValue());
+}
+```
+```python
+# Python3
+for k, v in m.items():
+    print(k, v)
+```
+
+### 15.9 Iterating with index + value together (enumerate)
+
+```cpp
+// C++ — no built-in enumerate; track index manually
+int i = 0;
+for (auto& x : a) { cout << i << "," << x; i++; }
+```
+```csharp
+// C# — LINQ Select with index
+foreach (var (x, i) in a.Select((x, i) => (x, i)))
+    Console.WriteLine($"{i},{x}");
+```
+```java
+// Java — no built-in enumerate; use classic indexed loop
+for (int i = 0; i < a.size(); i++) {
+    System.out.println(i + "," + a.get(i));
+}
+```
+```python
+# Python3 — built-in enumerate()
+for i, x in enumerate(a):
+    print(i, x)
+```
+
+> **Key takeaways:**
+> - Only **C++ (17+)** and **C#** support destructuring pairs/entries directly in a `for`/`foreach` (`auto& [k,v]` / `var (k,v)`). **Java has no destructuring** — you must call `.getKey()/.getValue()` or index into an array/record.
+> - **Python's `enumerate()`** is the cleanest way to get index+value; the other three languages need a manual counter or (C#) LINQ's indexed `Select`.
+> - **Java has no built-in tuple type** — the community typically uses `int[]`, `AbstractMap.SimpleEntry`, or a `record` for pairs.
+> - Prefer `auto&` (C++) and reference-based iteration to avoid unnecessary copies when iterating large collections of structs/objects.
+
+---
+
 ## Language-Specific Gotchas
 
 - **C++**: `unordered_map`/`unordered_set` have no guaranteed order; `map`/`set` are ordered (red-black tree). Watch out for iterator invalidation after `erase`.
